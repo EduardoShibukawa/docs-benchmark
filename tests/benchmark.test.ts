@@ -4,6 +4,8 @@ import { renderBenchmarkReport } from "../src/scorecard/report";
 import { executeQuickstartSandbox } from "../src/runner/sandbox";
 import { auditDocumentationLinks } from "../src/runner/links";
 import { BENCHMARK_TASKS } from "../src/probes/tasks";
+import { estimateTokens } from "../src/tokenizer";
+import { anonymizeContent } from "../src/anonymizer";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -82,5 +84,26 @@ describe("Docs-Benchmark Suite (v0.1)", () => {
       expect(t.groundTruth.targetFile).toBeDefined();
       expect(t.groundTruth.targetSymbol).toBeDefined();
     }
+  });
+
+  it("6. estimateTokens calculates accurate token counts on code and text", () => {
+    const text = "func CreateOrder(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, 'ok') }";
+    const tokens = estimateTokens(text);
+    expect(tokens).toBeGreaterThan(10);
+    expect(tokens).toBeLessThan(40);
+  });
+
+  it("7. anonymizeContent eliminates brand names and proprietary URLs for double-blind audit", () => {
+    const rawGira = "Gira-G provides gira init and links to https://github.com/EduardoShibukawa/gira-g";
+    const anonGira = anonymizeContent(rawGira, "gira");
+    expect(anonGira).not.toContain("Gira-G");
+    expect(anonGira).not.toContain("EduardoShibukawa");
+    expect(anonGira).toContain("System Alpha");
+
+    const rawUA = "Understand-Anything by Egonex-AI creates conceptual maps";
+    const anonUA = anonymizeContent(rawUA, "understand-anything");
+    expect(anonUA).not.toContain("Understand-Anything");
+    expect(anonUA).not.toContain("Egonex-AI");
+    expect(anonUA).toContain("System Beta");
   });
 });

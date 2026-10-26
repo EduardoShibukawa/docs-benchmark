@@ -1,16 +1,16 @@
 import type { CompetitorBenchmarkResult, CompetitorId } from "../types";
-import { COMPETITORS, evaluateEngineOps, evaluateHumanDX } from "../competitors/adapters";
-import { evaluateAgentProbe } from "../probes/agent_eval";
+import { ALL_ADAPTERS, measureEmpiricalHumanDX } from "../competitors/adapters";
+import { evaluateAgentProbeEmpirical } from "../probes/agent_eval";
 import { BENCHMARK_TASKS } from "../probes/tasks";
 
 /**
- * Computes the full benchmark result for a given competitor across all 3 dimensions.
+ * Computes the full benchmark result for a given competitor across all 3 empirical dimensions.
  */
-export function runCompetitorBenchmark(id: CompetitorId): CompetitorBenchmarkResult {
-  const meta = COMPETITORS[id];
-  const humanDX = evaluateHumanDX(id);
-  const agentDX = evaluateAgentProbe(id, BENCHMARK_TASKS);
-  const engineOps = evaluateEngineOps(id);
+export function runCompetitorBenchmark(id: CompetitorId, baseDir: string = process.cwd()): CompetitorBenchmarkResult {
+  const adapter = ALL_ADAPTERS[id];
+  const humanDX = measureEmpiricalHumanDX(adapter, baseDir);
+  const agentDX = evaluateAgentProbeEmpirical(id, BENCHMARK_TASKS, baseDir);
+  const engineOps = adapter.getEngineOpsMetrics(baseDir);
 
   // Global score: 40% Human DX, 40% Agent DX, 20% Engine Ops
   const globalScore = Math.round(
@@ -31,7 +31,7 @@ export function runCompetitorBenchmark(id: CompetitorId): CompetitorBenchmarkRes
   }
 
   return {
-    competitor: meta,
+    competitor: adapter.meta,
     humanDX,
     agentDX,
     engineOps,
@@ -43,7 +43,7 @@ export function runCompetitorBenchmark(id: CompetitorId): CompetitorBenchmarkRes
 /**
  * Runs the benchmark across all registered competitors.
  */
-export function runFullBenchmark(): CompetitorBenchmarkResult[] {
+export function runFullBenchmark(baseDir: string = process.cwd()): CompetitorBenchmarkResult[] {
   const ids: CompetitorId[] = ["gira", "understand-anything", "graphify", "static-baseline"];
-  return ids.map((id) => runCompetitorBenchmark(id));
+  return ids.map((id) => runCompetitorBenchmark(id, baseDir));
 }
