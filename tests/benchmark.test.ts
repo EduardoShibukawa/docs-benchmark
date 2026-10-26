@@ -6,6 +6,8 @@ import { auditDocumentationLinks } from "../src/runner/links";
 import { BENCHMARK_TASKS } from "../src/probes/tasks";
 import { estimateTokens } from "../src/tokenizer";
 import { anonymizeContent } from "../src/anonymizer";
+import { FEATURE_MATRIX } from "../src/features/feature_matrix";
+import { HUMAN_JOURNEY_QUESTIONS } from "../src/probes/human_journey";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -105,5 +107,20 @@ describe("Docs-Benchmark Suite (v0.1)", () => {
     expect(anonUA).not.toContain("Understand-Anything");
     expect(anonUA).not.toContain("Egonex-AI");
     expect(anonUA).toContain("System Beta");
+  });
+
+  it("8. FEATURE_MATRIX contains 8 features including feat-local-first-airgapped", () => {
+    expect(FEATURE_MATRIX.length).toBe(8);
+    const airgapped = FEATURE_MATRIX.find((f) => f.id === "feat-local-first-airgapped");
+    expect(airgapped).toBeDefined();
+    expect(airgapped?.competitors.gira.supported).toBe("full");
+    expect(airgapped?.competitors["understand-anything"].supported).toBe("none");
+  });
+
+  it("9. HUMAN_JOURNEY_QUESTIONS covers the 5 developer journey questions", () => {
+    expect(HUMAN_JOURNEY_QUESTIONS.length).toBe(5);
+    const q1 = HUMAN_JOURNEY_QUESTIONS.find((q) => q.id === "q1-purpose");
+    expect(q1).toBeDefined();
+    expect(q1?.question).toContain("objetivo principal");
   });
 });
