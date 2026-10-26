@@ -1,0 +1,86 @@
+import { describe, expect, it } from "bun:test";
+import { runFullBenchmark, runCompetitorBenchmark } from "../src/scorecard/metrics";
+import { renderBenchmarkReport } from "../src/scorecard/report";
+import { executeQuickstartSandbox } from "../src/runner/sandbox";
+import { auditDocumentationLinks } from "../src/runner/links";
+import { BENCHMARK_TASKS } from "../src/probes/tasks";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+describe("Docs-Benchmark Suite (v0.1)", () => {
+  it("1. executeQuickstartSandbox executes commands in isolated environment", () => {
+    const res = executeQuickstartSandbox({
+      id: "test-snippet",
+      commands: [
+        "echo 'hello world'",
+        "true",
+      ],
+    });
+    expect(res.totalCommands).toBe(2);
+    expect(res.passedCommands).toBe(2);
+    expect(res.failedCommands).toBe(0);
+    expect(res.exitCode).toBe(0);
+  });
+
+  it("2. auditDocumentationLinks detects valid and broken relative links and anchors", () => {
+    const dir = mkdtempSync(join(tmpdir(), "docs-bench-audit-"));
+    try {
+      writeFileSync(join(dir, "index.html"), `
+        <html><body>
+          <a href="about.html">About</a>
+          <a href="about.html#team">Team</a>
+          <a href="broken.html">Broken</a>
+        </body></html>
+      `);
+      writeFileSync(join(dir, "about.html"), `
+        <html><body>
+          <h1 id="team">Team</h1>
+        </body></html>
+      `);
+
+      const audit = auditDocumentationLinks(dir);
+      expect(audit.totalLinks).toBe(3);
+      expect(audit.validLinks).toBe(2);
+      expect(audit.brokenLinks.length).toBe(1);
+      expect(audit.brokenLinks[0].target).toBe("broken.html");
+      expect(audit.brokenLocatorRate).toBe(33.3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("3. runCompetitorBenchmark evaluates all 3 dimensions (Human DX, Agent DX, Engine Ops)", () => {
+    const giraRes = runCompetitorBenchmark("gira");
+    expect(giraRes.competitor.name).toBe("Gira-G");
+    expect(giraRes.humanDX.score).toBeGreaterThanOrEqual(85);
+    expect(giraRes.agentDX.score).toBeGreaterThanOrEqual(85);
+    expect(giraRes.engineOps.score).toBeGreaterThanOrEqual(90);
+    expect(giraRes.globalScore).toBeGreaterThanOrEqual(85);
+
+    const uaRes = runCompetitorBenchmark("understand-anything");
+    expect(uaRes.humanDX.score).toBeGreaterThanOrEqual(80);
+    expect(uaRes.engineOps.buildTimeMs).toBeGreaterThan(10000);
+  });
+
+  it("4. runFullBenchmark ranks competitors and renders report", () => {
+    const results = runFullBenchmark();
+    expect(results.length).toBe(4);
+
+    const report = renderBenchmarkReport(results);
+    expect(report).toContain("Docs-Benchmark (v0.1)");
+    expect(report).toContain("Gira-G");
+    expect(report).toContain("Understand-Anything");
+    expect(report).toContain("Graphify");
+    expect(report).toContain("Static Markdown");
+    expect(report).toContain("Scorecard Geral de Classificação");
+  });
+
+  it("5. BENCHMARK_TASKS covers realistic architecture comprehension scenarios", () => {
+    expect(BENCHMARK_TASKS.length).toBeGreaterThanOrEqual(5);
+    for (const t of BENCHMARK_TASKS) {
+      expect(t.groundTruth.targetFile).toBeDefined();
+      expect(t.groundTruth.targetSymbol).toBeDefined();
+    }
+  });
+});

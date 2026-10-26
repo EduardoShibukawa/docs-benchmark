@@ -1,0 +1,10 @@
+schema_version: 2
+target_system: microservice-demo
+repositories:
+  - name: microservice-demo
+    path: .
+    pinned_commit: HEAD
+forbidden_imports:
+  - from: "services/billing"
+    to: "services/inventory"
+    reason: "Billing must interact through async events, not synchronous calls."

@@ -1,0 +1,16 @@
+{
+  "name": "docs-benchmark",
+  "version": "0.1.0",
+  "description": "Multi-tool documentation benchmark comparing Gira-G, Understand-Anything, Graphify, and static baseline across Human DX, Agent DX, and Engine Ops",
+  "type": "module",
+  "main": "src/cli.ts",
+  "scripts": {
+    "test": "bun test",
+    "benchmark": "bun run src/cli.ts run",
+    "compare": "bun run src/cli.ts compare"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
