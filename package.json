@@ -1,5 +1,6 @@
 {
   "name": "docs-benchmark",
+  "license": "Apache-2.0",
   "version": "0.1.0",
   "description": "Multi-tool documentation benchmark comparing Gira-G, Understand-Anything, Graphify, and static baseline across Human DX, Agent DX, and Engine Ops",
   "type": "module",

@@ -48,3 +48,7 @@ bun run src/cli.ts audit ../gira-g/build
 - **Understand-Anything (Egonex-AI):** LLM-prompted conceptual wikis, rich human metaphors, high pedagogical value.
 - **Graphify:** Codebase knowledge graph extraction, community clustering, dependency visualization.
 - **Static Baseline:** Standard manual documentation (Docusaurus/MkDocs) without living synchronization.
+
+## License
+
+Apache-2.0, see [LICENSE](LICENSE).
